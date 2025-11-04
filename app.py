@@ -1,11 +1,25 @@
 from datetime import datetime
-from flask import Flask, render_template, request,flash
+from flask import Flask, render_template, request, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_mail import Mail, Message
+from pyexpat.errors import messages
+
 app = Flask(__name__)
 
 app.config["SECRET_KEY"] = "myapplication123"
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///data.db"
+
+# --- Email Configuration ---
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config["MAIL_USERNAME"] = "shorifhossain248@gmail.com"  # your Gmail address
+app.config["MAIL_PASSWORD"] = "hhts vslq ehti rzpj"  # your App Password (not normal password)
+
 db = SQLAlchemy(app)
+mail = Mail(app)
+
 
 class Form(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -16,32 +30,49 @@ class Form(db.Model):
     occupation = db.Column(db.String(80))
 
 
-
-@app.route('/', methods =["GET","POST"])
+@app.route('/', methods=["GET", "POST"])
 def index():
     if request.method == "POST":
         first_name = request.form["first_name"]
         last_name = request.form["last_name"]
         email = request.form["email"]
-        date= request.form["date"]
-        date_obj = datetime.strptime(date,"%Y-%m-%d")
+        date = request.form["date"]
+        date_obj = datetime.strptime(date, "%Y-%m-%d")
         occupation = request.form["occupation"]
 
-        form =Form(first_name = first_name,last_name =last_name,email =email,date =date_obj,occupation =occupation)
+        form = Form(first_name=first_name, last_name=last_name, email=email, date=date_obj, occupation=occupation)
         db.session.add(form)
         db.session.commit()
+
+        # Format the way you will se the mail you got
+        message_body = (
+            f"Thank you for your submission, {first_name}.\n\n"
+            f"Here is your data:\n"
+            f"First Name: {first_name}\n"
+            f"Last Name: {last_name}\n"
+            f"Available Date: {date}\n"
+            f"Occupation: {occupation}\n\n"
+            f"Thank you!"
+        )
+        message = Message(subject="New form Submission",
+                          sender=app.config["MAIL_USERNAME"],
+                          recipients=[email],
+                          body=message_body)
+        mail.send(message)
 
         flash(f"Thank you, {first_name}! Your application has been submitted successfully.", "success")
 
     return render_template("index.html")
 
 
-
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
-        app.run(debug=True,port=5001)
+        app.run(debug=True, port=5001)
 
 """
-pip install flask-sqlalchemy
+for create the database 
+    pip install flask-sqlalchemy
+die send the mail
+    pip install Flask-Mail
 """
