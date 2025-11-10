@@ -1,0 +1,1 @@
+A Flask-based job application system that stores applicant data in a SQLite database and sends email confirmations automatically. Features include date selection, occupation choices, and Bootstrap styling for responsive forms.
